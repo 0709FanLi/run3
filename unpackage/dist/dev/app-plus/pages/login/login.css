@@ -1,0 +1,83 @@
+/**
+ * 这里是uni-app内置的常用样式变量
+ *
+ * uni-app 官方扩展插件及插件市场（https://ext.dcloud.net.cn）上很多三方插件均使用了这些样式变量
+ * 如果你是插件开发者，建议你使用scss预处理，并在插件代码中直接使用这些变量（无需 import 这个文件），方便用户通过搭积木的方式开发整体风格一致的App
+ *
+ */
+/**
+ * 如果你是App开发者（插件使用者），你可以通过修改这些变量来定制自己的插件主题，实现自定义主题功能
+ *
+ * 如果你的项目同样使用了scss预处理，你也可以直接在你的 scss 代码中使用如下变量，同时无需 import 这个文件
+ */
+/* 颜色变量 */
+/* 行为相关颜色 */
+/* 文字基本颜色 */
+/* 背景颜色 */
+/* 边框颜色 */
+/* 尺寸变量 */
+/* 文字尺寸 */
+/* 图片尺寸 */
+/* Border Radius */
+/* 水平间距 */
+/* 垂直间距 */
+/* 透明度 */
+/* 文章场景相关 */
+.login-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+.login-container .bg-image {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+.login-container .content {
+  position: relative;
+  z-index: 2;
+  padding-top: 6.25rem;
+}
+.login-container .content .title {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #fff;
+  font-weight: bold;
+  margin-bottom: 3.125rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.login-container .content .form {
+  padding: 0 1.5625rem;
+}
+.login-container .content .form .input-group {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 1.40625rem;
+  padding: 0.625rem 1.25rem;
+  margin-bottom: 0.9375rem;
+}
+.login-container .content .form .input-group.code {
+  display: flex;
+  align-items: center;
+}
+.login-container .content .form .input-group.code .code-btn {
+  font-size: 0.875rem;
+  color: #18B566;
+  padding-left: 0.9375rem;
+}
+.login-container .content .form .input-group uni-input {
+  height: 1.875rem;
+  font-size: 1rem;
+}
+.login-container .content .form .submit-btn {
+  background: #18B566;
+  color: #fff;
+  border-radius: 1.40625rem;
+  height: 2.8125rem;
+  line-height: 2.8125rem;
+  font-size: 1rem;
+  margin-top: 1.875rem;
+}
+.login-container .content .form .submit-btn:active {
+  opacity: 0.8;
+}
