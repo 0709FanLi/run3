@@ -116,7 +116,8 @@
           "_www",
           "https",
           "http"
-        ]
+        ],
+        "layoutRatio": 0.5
       }
     },
     "tabBar": {

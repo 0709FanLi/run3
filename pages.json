@@ -3,15 +3,17 @@
 		{
 			"path": "pages/login/login",
 			"style": {
-				"navigationBarTitleText": "登录",
-				"navigationStyle": "custom"
+				"navigationBarTitleText": "登录"
 			}
 		},
 		{
 			"path": "pages/run/run",
 			"style": {
 				"navigationBarTitleText": "跑步",
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"app-plus": {
+					"titleNView": false
+				}
 			}
 		},
 		{
@@ -42,6 +44,7 @@
 	},
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "运动助手",
 		"navigationBarBackgroundColor": "#F8F8F8",
 		"backgroundColor": "#F8F8F8"
 	},

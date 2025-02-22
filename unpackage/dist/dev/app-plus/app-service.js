@@ -38,127 +38,140 @@ if (uni.restoreGlobal) {
     }
     return target;
   };
-  const _sfc_main$4 = {
-    data() {
-      return {
-        phone: "",
-        code: "",
-        codeText: "获取验证码",
-        counting: false,
-        timer: null,
-        countdown: 60
-      };
-    },
-    methods: {
-      getCode() {
-        if (this.counting)
+  const _sfc_main$7 = {
+    setup() {
+      const phone = vue.ref("18768880709");
+      const code = vue.ref("123456");
+      const counting = vue.ref(false);
+      const counter = vue.ref(60);
+      vue.onMounted(() => {
+        phone.value = "18768880709";
+        code.value = "123456";
+      });
+      const getCode = () => {
+        if (counting.value)
           return;
-        if (!/^1[3-9]\d{9}$/.test(this.phone)) {
+        if (!/^1[3-9]\d{9}$/.test(phone.value)) {
           uni.showToast({
             title: "请输入正确的手机号",
             icon: "none"
           });
           return;
         }
-        this.counting = true;
-        this.countdown = 60;
-        this.timer = setInterval(() => {
-          this.countdown--;
-          this.codeText = `${this.countdown}s后重试`;
-          if (this.countdown <= 0) {
-            clearInterval(this.timer);
-            this.counting = false;
-            this.codeText = "获取验证码";
+        uni.showToast({
+          title: "验证码已发送",
+          icon: "none"
+        });
+        counting.value = true;
+        counter.value = 60;
+        const timer = setInterval(() => {
+          counter.value--;
+          if (counter.value <= 0) {
+            clearInterval(timer);
+            counting.value = false;
           }
         }, 1e3);
-      },
-      handleLogin() {
-        if (!/^1[3-9]\d{9}$/.test(this.phone)) {
+      };
+      const handleLogin = () => {
+        if (!/^1[3-9]\d{9}$/.test(phone.value)) {
           uni.showToast({
             title: "请输入正确的手机号",
             icon: "none"
           });
           return;
         }
-        if (!/^\d{6}$/.test(this.code)) {
+        if (!/^\d{6}$/.test(code.value)) {
           uni.showToast({
             title: "请输入正确的验证码",
             icon: "none"
           });
           return;
         }
-        uni.switchTab({
-          url: "/pages/run/run"
-        });
-      }
-    },
-    onUnmounted() {
-      if (this.timer) {
-        clearInterval(this.timer);
-      }
+        if (phone.value === "18768880709" && code.value === "123456") {
+          uni.setStorageSync("token", "default_token");
+          uni.setStorageSync("userInfo", {
+            phone: phone.value
+          });
+          uni.showToast({
+            title: "登录成功",
+            icon: "success"
+          });
+          setTimeout(() => {
+            uni.reLaunch({
+              url: "/pages/run/run"
+            });
+          }, 1500);
+        } else {
+          uni.showToast({
+            title: "手机号或验证码错误",
+            icon: "none"
+          });
+        }
+      };
+      return {
+        phone,
+        code,
+        counting,
+        counter,
+        getCode,
+        handleLogin
+      };
     }
   };
-  function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
-    return vue.openBlock(), vue.createElementBlock("view", { class: "login-container" }, [
-      vue.createElementVNode("image", {
-        class: "bg-image",
-        src: "/static/login-bg.jpg",
-        mode: "aspectFill"
-      }),
-      vue.createElementVNode("view", { class: "content" }, [
+  function _sfc_render$6(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
+      vue.createElementVNode("view", { class: "login-form" }, [
         vue.createElementVNode("view", { class: "title" }, "运动助手"),
-        vue.createElementVNode("view", { class: "form" }, [
-          vue.createElementVNode("view", { class: "input-group" }, [
-            vue.withDirectives(vue.createElementVNode(
-              "input",
-              {
-                type: "number",
-                "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.phone = $event),
-                maxlength: "11",
-                placeholder: "请输入手机号"
-              },
-              null,
-              512
-              /* NEED_PATCH */
-            ), [
-              [vue.vModelText, $data.phone]
-            ])
+        vue.createElementVNode("view", { class: "form-item" }, [
+          vue.withDirectives(vue.createElementVNode(
+            "input",
+            {
+              type: "number",
+              "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $setup.phone = $event),
+              placeholder: "请输入手机号",
+              maxlength: "11"
+            },
+            null,
+            512
+            /* NEED_PATCH */
+          ), [
+            [vue.vModelText, $setup.phone]
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "form-item code-item" }, [
+          vue.withDirectives(vue.createElementVNode(
+            "input",
+            {
+              type: "number",
+              "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $setup.code = $event),
+              placeholder: "请输入验证码",
+              maxlength: "6"
+            },
+            null,
+            512
+            /* NEED_PATCH */
+          ), [
+            [vue.vModelText, $setup.code]
           ]),
-          vue.createElementVNode("view", { class: "input-group code" }, [
-            vue.withDirectives(vue.createElementVNode(
-              "input",
-              {
-                type: "number",
-                "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $data.code = $event),
-                maxlength: "6",
-                placeholder: "请输入验证码"
-              },
-              null,
-              512
-              /* NEED_PATCH */
-            ), [
-              [vue.vModelText, $data.code]
-            ]),
-            vue.createElementVNode(
-              "text",
-              {
-                class: "code-btn",
-                onClick: _cache[2] || (_cache[2] = (...args) => $options.getCode && $options.getCode(...args))
-              },
-              vue.toDisplayString($data.codeText),
-              1
-              /* TEXT */
-            )
-          ]),
-          vue.createElementVNode("button", {
-            class: "submit-btn",
-            onClick: _cache[3] || (_cache[3] = (...args) => $options.handleLogin && $options.handleLogin(...args))
-          }, "登录/注册")
-        ])
+          vue.createElementVNode(
+            "text",
+            {
+              class: vue.normalizeClass(["get-code", { disabled: $setup.counting }]),
+              onClick: _cache[2] || (_cache[2] = (...args) => $setup.getCode && $setup.getCode(...args))
+            },
+            vue.toDisplayString($setup.counting ? `${$setup.counter}s后重试` : "获取验证码"),
+            3
+            /* TEXT, CLASS */
+          )
+        ]),
+        vue.createElementVNode("button", {
+          class: "login-btn",
+          onClick: _cache[3] || (_cache[3] = (...args) => $setup.handleLogin && $setup.handleLogin(...args))
+        }, "登录")
       ])
     ]);
   }
-  const PagesLoginLogin = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__file", "/Users/Macx/Desktop/ai项目/run3/pages/login/login.vue"]]);
+  const PagesLoginLogin = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__file", "/Users/Macx/Desktop/ai项目/run3/pages/login/login.vue"]]);
   function formatAppLog(type, filename, ...args) {
     if (uni.__log__) {
       uni.__log__(type, filename, ...args);
@@ -166,7 +179,7 @@ if (uni.restoreGlobal) {
       console[type].apply(console, [...args, filename]);
     }
   }
-  const _sfc_main$3 = {
+  const _sfc_main$6 = {
     props: {
       pace: String,
       distance: Number,
@@ -204,10 +217,10 @@ if (uni.restoreGlobal) {
       };
     }
   };
-  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$5(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "voice-coach" });
   }
-  const AiVoiceCoach = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-e7e9e886"], ["__file", "/Users/Macx/Desktop/ai项目/run3/components/ai-voice-coach.vue"]]);
+  const AiVoiceCoach = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-e7e9e886"], ["__file", "/Users/Macx/Desktop/ai项目/run3/components/ai-voice-coach.vue"]]);
   const request = (options) => {
     return new Promise((resolve, reject) => {
       uni.request({
@@ -244,9 +257,182 @@ if (uni.restoreGlobal) {
       data
     });
   };
+  const _sfc_main$5 = {
+    name: "MapView",
+    props: {
+      location: {
+        type: Object,
+        default: () => ({})
+      }
+    },
+    data() {
+      return {
+        webviewStyles: {
+          progress: false,
+          background: "#ffffff"
+        },
+        mapUrl: "/hybrid/html/map.html"
+      };
+    },
+    methods: {
+      handleMessage(event) {
+        this.$emit("message", event);
+      }
+    }
+  };
+  function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "map-view" }, [
+      vue.createElementVNode("web-view", {
+        "webview-styles": $data.webviewStyles,
+        src: "/hybrid/html/map.html",
+        onMessage: _cache[0] || (_cache[0] = (...args) => $options.handleMessage && $options.handleMessage(...args))
+      }, null, 40, ["webview-styles"])
+    ]);
+  }
+  const MapView = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-fa941138"], ["__file", "/Users/Macx/Desktop/ai项目/run3/components/run/map-view.vue"]]);
+  const _sfc_main$4 = {
+    name: "StatsPanel",
+    props: {
+      distance: {
+        type: Number,
+        default: 0
+      },
+      duration: {
+        type: Number,
+        default: 0
+      },
+      calories: {
+        type: Number,
+        default: 0
+      },
+      heartRate: {
+        type: Number,
+        default: null
+      }
+    },
+    computed: {
+      formatDistance() {
+        return (this.distance / 1e3).toFixed(2);
+      },
+      formatDuration() {
+        const minutes = Math.floor(this.duration / 60);
+        const seconds = this.duration % 60;
+        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      },
+      pace() {
+        if (this.distance === 0)
+          return `00'00"`;
+        const paceSeconds = this.duration / this.distance * 1e3;
+        const paceMinutes = Math.floor(paceSeconds / 60);
+        const remainSeconds = Math.floor(paceSeconds % 60);
+        return `${String(paceMinutes).padStart(2, "0")}'${String(remainSeconds).padStart(2, "0")}"`;
+      }
+    }
+  };
+  function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("cover-view", { class: "data-container" }, [
+      vue.createElementVNode("cover-view", { class: "data-content" }, [
+        vue.createElementVNode("cover-view", { class: "main-data" }, [
+          vue.createElementVNode("cover-view", { class: "data-item" }, [
+            vue.createElementVNode(
+              "cover-view",
+              { class: "value" },
+              vue.toDisplayString($options.formatDistance),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("cover-view", { class: "label" }, "距离(km)")
+          ]),
+          vue.createElementVNode("cover-view", { class: "data-item" }, [
+            vue.createElementVNode(
+              "cover-view",
+              { class: "value" },
+              vue.toDisplayString($options.formatDuration),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("cover-view", { class: "label" }, "时间")
+          ]),
+          vue.createElementVNode("cover-view", { class: "data-item" }, [
+            vue.createElementVNode(
+              "cover-view",
+              { class: "value" },
+              vue.toDisplayString($options.pace),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("cover-view", { class: "label" }, "配速")
+          ])
+        ]),
+        vue.createElementVNode("cover-view", { class: "sub-data" }, [
+          vue.createElementVNode("cover-view", { class: "stat-box" }, [
+            vue.createElementVNode(
+              "cover-view",
+              { class: "value" },
+              vue.toDisplayString($props.calories),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("cover-view", { class: "label" }, "消耗(kcal)")
+          ]),
+          vue.createElementVNode("cover-view", { class: "stat-box" }, [
+            vue.createElementVNode(
+              "cover-view",
+              { class: "value" },
+              vue.toDisplayString($props.heartRate || "--"),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("cover-view", { class: "label" }, "心率(bpm)")
+          ])
+        ])
+      ])
+    ]);
+  }
+  const StatsPanel = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-b0a71ce3"], ["__file", "/Users/Macx/Desktop/ai项目/run3/components/run/stats-panel.vue"]]);
+  const _sfc_main$3 = {
+    name: "ControlButton",
+    props: {
+      isRunning: {
+        type: Boolean,
+        default: false
+      }
+    },
+    methods: {
+      handleTap() {
+        this.$emit("tap");
+      }
+    }
+  };
+  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("cover-view", { class: "btn-area" }, [
+      vue.createElementVNode(
+        "cover-view",
+        {
+          class: vue.normalizeClass(["run-btn", { "running": $props.isRunning }]),
+          onClick: _cache[0] || (_cache[0] = (...args) => $options.handleTap && $options.handleTap(...args))
+        },
+        [
+          vue.createElementVNode(
+            "cover-view",
+            { class: "btn-text" },
+            vue.toDisplayString($props.isRunning ? "结束跑步" : "开始跑步"),
+            1
+            /* TEXT */
+          )
+        ],
+        2
+        /* CLASS */
+      )
+    ]);
+  }
+  const ControlButton = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-6faca054"], ["__file", "/Users/Macx/Desktop/ai项目/run3/components/run/control-button.vue"]]);
   const _sfc_main$2 = {
     components: {
-      AiVoiceCoach
+      AiVoiceCoach,
+      MapView,
+      StatsPanel,
+      ControlButton
     },
     setup() {
       const isRunning = vue.ref(false);
@@ -261,8 +447,8 @@ if (uni.restoreGlobal) {
       const locationTimer = vue.ref(null);
       const durationTimer = vue.ref(null);
       const trackPoints = vue.ref([]);
-      const mapUrl = vue.ref("_www/hybrid/html/map.html");
-      const mapWebview = vue.ref(null);
+      const mapUrl = vue.ref("/hybrid/html/map.html");
+      vue.ref(null);
       const retryCount = vue.ref(0);
       const maxRetries = 3;
       const formatDistance = vue.computed(() => {
@@ -281,6 +467,8 @@ if (uni.restoreGlobal) {
         const remainSeconds = Math.floor(paceSeconds % 60);
         return `${String(paceMinutes).padStart(2, "0")}'${String(remainSeconds).padStart(2, "0")}"`;
       });
+      const calories = vue.ref(0);
+      const heartRate = vue.ref(null);
       const checkAndRequestPermission = () => {
         return new Promise((resolve, reject) => {
           const checkSystemLocation = () => {
@@ -343,16 +531,34 @@ if (uni.restoreGlobal) {
           );
         });
       };
+      const setWebviewStyle = () => {
+        setTimeout(() => {
+          const pages = getCurrentPages();
+          const page = pages[pages.length - 1];
+          const currentWebview = page.$getAppWebview();
+          const webviews = currentWebview.children();
+          if (webviews && webviews[0]) {
+            webviews[0].setStyle({
+              height: "50vh",
+              background: "#ffffff"
+            });
+            formatAppLog("log", "at pages/run/run.vue:205", "设置webview样式成功");
+          } else {
+            formatAppLog("log", "at pages/run/run.vue:207", "未找到webview");
+          }
+        }, 300);
+      };
       const handleMessage = (event) => {
-        formatAppLog("log", "at pages/run/run.vue:175", "收到地图消息:", event);
+        formatAppLog("log", "at pages/run/run.vue:219", "收到地图消息:", event);
         const message = event.detail || {};
         if (message.type === "mapReady") {
           updateMapLocation(location.value);
+          setWebviewStyle();
         }
       };
       const updateMapLocation = (loc) => {
         if (!loc || !loc.latitude || !loc.longitude) {
-          formatAppLog("error", "at pages/run/run.vue:185", "无效的位置数据:", loc);
+          formatAppLog("error", "at pages/run/run.vue:230", "无效的位置数据:", loc);
           return;
         }
         const message = {
@@ -360,23 +566,19 @@ if (uni.restoreGlobal) {
           latitude: loc.latitude,
           longitude: loc.longitude
         };
-        formatAppLog("log", "at pages/run/run.vue:194", "发送位置更新:", message);
-        const pages = getCurrentPages();
-        const page = pages[pages.length - 1];
-        const currentWebview = page.$getAppWebview();
-        const webviews = currentWebview.children();
-        const mapWebview2 = webviews.find((v) => v.getURL().includes("map.html"));
-        if (mapWebview2) {
-          mapWebview2.evalJS(`
-          if (window.postMessage) {
-            window.postMessage(${JSON.stringify(message)}, '*');
+        formatAppLog("log", "at pages/run/run.vue:239", "发送位置更新:", message);
+        const mapWebview = plus.webview.getWebviewById("map-webview");
+        if (mapWebview) {
+          const messageStr = JSON.stringify(message);
+          mapWebview.evalJS(`
+          try {
+            window.postMessage(${messageStr}, '*');
+          } catch(e) {
+            __f__('error','at pages/run/run.vue:250','发送消息失败:', e);
           }
         `);
         } else {
-          formatAppLog("error", "at pages/run/run.vue:212", "未找到地图webview, 等待重试");
-          setTimeout(() => {
-            updateMapLocation(loc);
-          }, 500);
+          formatAppLog("error", "at pages/run/run.vue:254", "未找到地图webview");
         }
       };
       const toggleRun = async () => {
@@ -393,7 +595,7 @@ if (uni.restoreGlobal) {
             retryCount.value = 0;
             const res = await getLocationWithRetry();
             uni.hideLoading();
-            formatAppLog("log", "at pages/run/run.vue:240", "获取到位置:", res);
+            formatAppLog("log", "at pages/run/run.vue:279", "获取到位置:", res);
             location.value = res;
             isRunning.value = true;
             setTimeout(() => {
@@ -402,7 +604,7 @@ if (uni.restoreGlobal) {
             startTracking();
           } catch (err) {
             uni.hideLoading();
-            formatAppLog("error", "at pages/run/run.vue:253", "开始跑步失败:", err);
+            formatAppLog("error", "at pages/run/run.vue:292", "开始跑步失败:", err);
             uni.showToast({
               title: err.message || "定位失败，请检查GPS和网络状态",
               icon: "none",
@@ -416,9 +618,9 @@ if (uni.restoreGlobal) {
           const page = pages[pages.length - 1];
           const currentWebview = page.$getAppWebview();
           const webviews = currentWebview.children();
-          const mapWebview2 = webviews.find((v) => v.getURL().includes("map.html"));
-          if (mapWebview2) {
-            mapWebview2.evalJS(`
+          const mapWebview = webviews.find((v) => v.getURL().includes("map.html"));
+          if (mapWebview) {
+            mapWebview.evalJS(`
             if (window.postMessage) {
               window.postMessage({ type: 'reset' }, '*');
             }
@@ -475,7 +677,7 @@ if (uni.restoreGlobal) {
       };
       const getLocationWithRetry = async () => {
         try {
-          formatAppLog("log", "at pages/run/run.vue:338", `尝试获取位置，第${retryCount.value + 1}次`);
+          formatAppLog("log", "at pages/run/run.vue:377", `尝试获取位置，第${retryCount.value + 1}次`);
           return new Promise((resolve, reject) => {
             uni.getLocation({
               type: "gcj02",
@@ -486,7 +688,7 @@ if (uni.restoreGlobal) {
               altitude: true,
               // 获取海拔高度
               success: (res) => {
-                formatAppLog("log", "at pages/run/run.vue:348", "定位成功:", res);
+                formatAppLog("log", "at pages/run/run.vue:387", "定位成功:", res);
                 if (res.latitude && res.longitude) {
                   resolve(res);
                 } else {
@@ -494,7 +696,7 @@ if (uni.restoreGlobal) {
                 }
               },
               fail: (err) => {
-                formatAppLog("error", "at pages/run/run.vue:357", "定位失败:", err);
+                formatAppLog("error", "at pages/run/run.vue:396", "定位失败:", err);
                 reject(err);
               }
             });
@@ -518,7 +720,7 @@ if (uni.restoreGlobal) {
             geocode: true,
             altitude: true,
             success: (res) => {
-              formatAppLog("log", "at pages/run/run.vue:383", "位置更新:", res);
+              formatAppLog("log", "at pages/run/run.vue:422", "位置更新:", res);
               if (res.latitude && res.longitude) {
                 location.value = res;
                 updateMapLocation(res);
@@ -540,13 +742,16 @@ if (uni.restoreGlobal) {
               }
             },
             fail: (err) => {
-              formatAppLog("error", "at pages/run/run.vue:405", "位置更新失败:", err);
+              formatAppLog("error", "at pages/run/run.vue:444", "位置更新失败:", err);
             }
           });
         }, 3e3);
         durationTimer.value = setInterval(() => {
           duration.value++;
         }, 1e3);
+        if (distance.value > 0) {
+          calories.value = Math.round(distance.value / 1e3 * 60);
+        }
       };
       const stopTracking = () => {
         clearInterval(locationTimer.value);
@@ -566,20 +771,83 @@ if (uni.restoreGlobal) {
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
       };
+      const createMapWebview = () => {
+        try {
+          const currentWebview = plus.webview.currentWebview();
+          const mapWebview = plus.webview.create("/hybrid/html/map.html", "map-webview", {
+            top: "0px",
+            height: "50vh",
+            width: "100%",
+            position: "static",
+            background: "transparent",
+            // 添加背景透明
+            render: "always",
+            // 保持渲染
+            kernel: "WKWebview"
+            // 使用 WKWebview 内核
+          });
+          currentWebview.append(mapWebview);
+          mapWebview.addEventListener("loaded", () => {
+            formatAppLog("log", "at pages/run/run.vue:506", "地图加载完成");
+            mapWebview.evalJS(`
+            if (window.map) {
+              window.map.enableScrollWheelZoom(true);
+              window.map.enableDragging();
+            }
+          `);
+            if (location.value) {
+              setTimeout(() => {
+                updateMapLocation(location.value);
+              }, 500);
+            }
+          });
+          return mapWebview;
+        } catch (err) {
+          formatAppLog("error", "at pages/run/run.vue:524", "创建地图webview失败:", err);
+          return null;
+        }
+      };
+      const webviewStyles = {
+        progress: false,
+        // 是否显示进度条
+        background: "#ffffff"
+        // webview 背景色
+      };
       vue.onMounted(() => {
+        setTimeout(() => {
+          const mapWebview = createMapWebview();
+          if (!mapWebview) {
+            uni.showToast({
+              title: "创建地图失败",
+              icon: "none"
+            });
+            return;
+          }
+        }, 500);
         uni.getLocation({
           type: "gcj02",
           isHighAccuracy: true,
           success: (res) => {
-            formatAppLog("log", "at pages/run/run.vue:447", "初始化位置:", res);
+            formatAppLog("log", "at pages/run/run.vue:559", "初始化位置:", res);
             location.value = res;
+            setTimeout(() => {
+              updateMapLocation(res);
+            }, 1500);
           },
           fail: (err) => {
-            formatAppLog("error", "at pages/run/run.vue:451", "初始化位置获取失败:", err);
+            formatAppLog("error", "at pages/run/run.vue:567", "初始化位置获取失败:", err);
+            uni.showToast({
+              title: "获取位置失败，请检查定位权限",
+              icon: "none"
+            });
           }
         });
       });
       vue.onUnmounted(() => {
+        const mapWebview = plus.webview.getWebviewById("map-webview");
+        if (mapWebview) {
+          mapWebview.close();
+        }
         stopTracking();
       });
       return {
@@ -595,93 +863,104 @@ if (uni.restoreGlobal) {
         mapUrl,
         toggleRun,
         handleMessage,
-        retryCount,
-        maxRetries,
-        mapWebview
+        calories,
+        heartRate,
+        webviewStyles
       };
     }
   };
   function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_ai_voice_coach = vue.resolveComponent("ai-voice-coach");
-    return vue.openBlock(), vue.createElementBlock("view", { class: "run-container" }, [
-      $setup.isRunning ? (vue.openBlock(), vue.createElementBlock("web-view", {
-        key: 0,
-        ref: "mapWebview",
-        class: "map",
-        src: $setup.mapUrl,
-        onMessage: _cache[0] || (_cache[0] = (...args) => $setup.handleMessage && $setup.handleMessage(...args))
-      }, null, 40, ["src"])) : vue.createCommentVNode("v-if", true),
-      vue.createCommentVNode(" 未开始跑步时的开始按钮 "),
-      !$setup.isRunning ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 1,
-        class: "start-overlay"
-      }, [
-        vue.createElementVNode("view", { class: "start-button-wrapper" }, [
-          vue.createElementVNode("view", { class: "pulse-ring" }),
-          vue.createElementVNode("view", {
-            class: "start-button",
-            onClick: _cache[1] || (_cache[1] = (...args) => $setup.toggleRun && $setup.toggleRun(...args))
-          }, [
-            vue.createElementVNode("text", null, "开始跑步")
-          ])
-        ])
-      ])) : vue.createCommentVNode("v-if", true),
-      vue.createElementVNode(
-        "view",
-        {
-          class: vue.normalizeClass(["run-info", { "running": $setup.isRunning }])
-        },
-        [
-          vue.createElementVNode("view", { class: "stats-container" }, [
-            vue.createElementVNode("view", { class: "stat-item" }, [
+    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
+      vue.createCommentVNode(" 地图区域 "),
+      vue.createElementVNode("view", { class: "map-view" }, [
+        vue.createElementVNode("web-view", {
+          "webview-styles": $setup.webviewStyles,
+          src: "/hybrid/html/map.html",
+          onMessage: _cache[0] || (_cache[0] = (...args) => $setup.handleMessage && $setup.handleMessage(...args))
+        }, null, 40, ["webview-styles"])
+      ]),
+      vue.createCommentVNode(" 使用cover-view显示数据 "),
+      vue.createElementVNode("cover-view", { class: "data-container" }, [
+        vue.createElementVNode("cover-view", { class: "data-content" }, [
+          vue.createCommentVNode(" 主要数据 "),
+          vue.createElementVNode("cover-view", { class: "main-data" }, [
+            vue.createElementVNode("cover-view", { class: "data-item" }, [
               vue.createElementVNode(
-                "text",
+                "cover-view",
                 { class: "value" },
                 vue.toDisplayString($setup.formatDistance),
                 1
                 /* TEXT */
               ),
-              vue.createElementVNode("text", { class: "label" }, "距离(km)")
+              vue.createElementVNode("cover-view", { class: "label" }, "距离(km)")
             ]),
-            vue.createElementVNode("view", { class: "stat-item" }, [
+            vue.createElementVNode("cover-view", { class: "data-item" }, [
               vue.createElementVNode(
-                "text",
+                "cover-view",
                 { class: "value" },
                 vue.toDisplayString($setup.formatDuration),
                 1
                 /* TEXT */
               ),
-              vue.createElementVNode("text", { class: "label" }, "时间")
+              vue.createElementVNode("cover-view", { class: "label" }, "时间")
             ]),
-            vue.createElementVNode("view", { class: "stat-item" }, [
+            vue.createElementVNode("cover-view", { class: "data-item" }, [
               vue.createElementVNode(
-                "text",
+                "cover-view",
                 { class: "value" },
                 vue.toDisplayString($setup.pace),
                 1
                 /* TEXT */
               ),
-              vue.createElementVNode("text", { class: "label" }, "配速")
+              vue.createElementVNode("cover-view", { class: "label" }, "配速")
             ])
           ]),
-          $setup.isRunning ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "run-button running",
-            onClick: _cache[2] || (_cache[2] = (...args) => $setup.toggleRun && $setup.toggleRun(...args))
-          }, [
-            vue.createElementVNode("text", null, "结束跑步")
-          ])) : vue.createCommentVNode("v-if", true)
-        ],
-        2
-        /* CLASS */
-      ),
-      vue.createCommentVNode(" AI语音提示组件 "),
-      $setup.isRunning ? (vue.openBlock(), vue.createBlock(_component_ai_voice_coach, {
-        key: 2,
-        pace: $setup.pace,
-        distance: $setup.distance,
-        duration: $setup.duration
-      }, null, 8, ["pace", "distance", "duration"])) : vue.createCommentVNode("v-if", true)
+          vue.createCommentVNode(" 次要数据 "),
+          vue.createElementVNode("cover-view", { class: "sub-data" }, [
+            vue.createElementVNode("cover-view", { class: "stat-box" }, [
+              vue.createElementVNode(
+                "cover-view",
+                { class: "value" },
+                vue.toDisplayString($setup.calories),
+                1
+                /* TEXT */
+              ),
+              vue.createElementVNode("cover-view", { class: "label" }, "消耗(kcal)")
+            ]),
+            vue.createElementVNode("cover-view", { class: "stat-box" }, [
+              vue.createElementVNode(
+                "cover-view",
+                { class: "value" },
+                vue.toDisplayString($setup.heartRate || "--"),
+                1
+                /* TEXT */
+              ),
+              vue.createElementVNode("cover-view", { class: "label" }, "心率(bpm)")
+            ])
+          ]),
+          vue.createCommentVNode(" 按钮区域 "),
+          vue.createElementVNode("cover-view", { class: "btn-area" }, [
+            vue.createElementVNode(
+              "cover-view",
+              {
+                class: vue.normalizeClass(["run-btn", { "running": $setup.isRunning }]),
+                onClick: _cache[1] || (_cache[1] = (...args) => $setup.toggleRun && $setup.toggleRun(...args))
+              },
+              [
+                vue.createElementVNode(
+                  "cover-view",
+                  { class: "btn-text" },
+                  vue.toDisplayString($setup.isRunning ? "结束跑步" : "开始跑步"),
+                  1
+                  /* TEXT */
+                )
+              ],
+              2
+              /* CLASS */
+            )
+          ])
+        ])
+      ])
     ]);
   }
   const PagesRunRun = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__file", "/Users/Macx/Desktop/ai项目/run3/pages/run/run.vue"]]);

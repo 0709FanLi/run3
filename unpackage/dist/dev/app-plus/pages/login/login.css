@@ -23,61 +23,67 @@
 /* 垂直间距 */
 /* 透明度 */
 /* 文章场景相关 */
-.login-container {
-  position: relative;
+.container {
   width: 100vw;
   height: 100vh;
-}
-.login-container .bg-image {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-.login-container .content {
-  position: relative;
-  z-index: 2;
-  padding-top: 6.25rem;
-}
-.login-container .content .title {
-  text-align: center;
-  font-size: 1.5rem;
-  color: #fff;
-  font-weight: bold;
-  margin-bottom: 3.125rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-.login-container .content .form {
-  padding: 0 1.5625rem;
-}
-.login-container .content .form .input-group {
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 1.40625rem;
-  padding: 0.625rem 1.25rem;
-  margin-bottom: 0.9375rem;
-}
-.login-container .content .form .input-group.code {
   display: flex;
   align-items: center;
+  justify-content: center;
+  background: url("../../static/login.png") no-repeat center center;
+  background-size: cover;
 }
-.login-container .content .form .input-group.code .code-btn {
-  font-size: 0.875rem;
-  color: #18B566;
-  padding-left: 0.9375rem;
+.container .login-form {
+  width: 80%;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 0.625rem;
+  box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.1);
+  -webkit-backdrop-filter: blur(10px);
+          backdrop-filter: blur(10px);
 }
-.login-container .content .form .input-group uni-input {
-  height: 1.875rem;
+.container .login-form .title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  text-align: center;
+  color: #333;
+  margin-bottom: 1.875rem;
+}
+.container .login-form .form-item {
+  border-bottom: 1px solid #eee;
+  margin-bottom: 1.25rem;
+  padding: 0.625rem 0;
+}
+.container .login-form .form-item uni-input {
   font-size: 1rem;
+  width: 100%;
 }
-.login-container .content .form .submit-btn {
+.container .login-form .code-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.container .login-form .code-item uni-input {
+  flex: 1;
+  margin-right: 0.625rem;
+}
+.container .login-form .code-item .get-code {
+  color: #18B566;
+  font-size: 0.875rem;
+  padding: 0.3125rem 0;
+  white-space: nowrap;
+}
+.container .login-form .code-item .get-code.disabled {
+  color: #999;
+}
+.container .login-form .login-btn {
+  margin-top: 1.875rem;
   background: #18B566;
   color: #fff;
-  border-radius: 1.40625rem;
-  height: 2.8125rem;
-  line-height: 2.8125rem;
+  height: 2.75rem;
+  line-height: 2.75rem;
+  border-radius: 1.375rem;
   font-size: 1rem;
-  margin-top: 1.875rem;
 }
-.login-container .content .form .submit-btn:active {
+.container .login-form .login-btn:active {
   opacity: 0.8;
 }

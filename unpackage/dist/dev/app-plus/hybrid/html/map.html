@@ -4,42 +4,97 @@
     <meta charset="utf-8">
     <title>百度地图</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-    <script type="text/javascript" src="https://api.map.baidu.com/api?type=webgl&v=1.0&ak=lk6K6qQBy3YNtjsCQ3QsJ4wwuNNP2wvG"></script>
     <style type="text/css">
-        html, body {
-            width: 100%;
-            height: 100%;
+        * {
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            box-sizing: border-box;
         }
+        
+        html, body {
+            width: 100%;
+            height: 50vh;
+            overflow: hidden;
+            position: relative;
+            background: #fff;
+        }
+        
         #map {
             width: 100%;
             height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
     </style>
 </head>
 <body>
     <div id="map"></div>
-    <script>
-        // 创建地图实例
-        var map = new BMapGL.Map("map");
+    <script type="text/javascript">
+        var map = null;
         var currentMarker = null;
         var polyline = null;
         var points = [];
         var x_PI = 3.14159265358979324 * 3000.0 / 180.0;
 
-        // 设置初始中心点和缩放级别
-        var defaultPoint = new BMapGL.Point(116.397, 39.909);
-        map.centerAndZoom(defaultPoint, 16);
-        
-        // 开启鼠标滚轮缩放
-        map.enableScrollWheelZoom(true);
-        
-        // 添加地图控件
-        map.addControl(new BMapGL.ScaleControl());
-        map.addControl(new BMapGL.ZoomControl());
-        map.addControl(new BMapGL.LocationControl());
+        // 初始化地图
+        function initMap(point) {
+            try {
+                if (!map) {
+                    map = new BMapGL.Map("map", {
+                        enableMapClick: false,
+                        displayOptions: {
+                            building: false
+                        }
+                    });
+                }
+                
+                map.centerAndZoom(point, 16);
+                map.enableScrollWheelZoom();
+                map.enableDragging();
+                
+                // 添加定位精度圈
+                var circle = new BMapGL.Circle(point, 20, {
+                    strokeColor: '#18B566',
+                    strokeWeight: 2,
+                    strokeOpacity: 0.5,
+                    fillColor: '#18B566',
+                    fillOpacity: 0.2
+                });
+                map.addOverlay(circle);
+                
+                // 使用自定义图标 - 修改图标路径
+                var myIcon = new BMapGL.Icon("_www/static/location-marker.png", new BMapGL.Size(32, 32), {
+                    // 指定定位位置
+                    anchor: new BMapGL.Size(16, 32),
+                    // 设置图片偏移
+                    imageOffset: new BMapGL.Size(0, 0)
+                });
+                
+                // 创建标注对象并添加到地图
+                currentMarker = new BMapGL.Marker(point, {
+                    icon: myIcon
+                });
+                map.addOverlay(currentMarker);
+                
+                // 添加备用图标处理
+                currentMarker.addEventListener('error', function() {
+                    console.log('图标加载失败，使用默认图标');
+                    currentMarker = new BMapGL.Marker(point);
+                    map.addOverlay(currentMarker);
+                });
+            } catch (err) {
+                console.error('地图初始化失败:', err);
+                // 使用默认图标作为备选
+                currentMarker = new BMapGL.Marker(point);
+                map.addOverlay(currentMarker);
+            }
+        }
 
         // 坐标转换方法
         function gcj02toBd09(lng, lat) {
@@ -57,48 +112,19 @@
 
         // 监听来自App的消息
         window.addEventListener('message', function(event) {
-            console.log('地图收到位置更新:', event.data);
             var data = event.data;
             if (data.type === 'updateLocation') {
                 try {
                     // 转换坐标系
                     var bdPoint = gcj02toBd09(data.longitude, data.latitude);
-                    console.log('转换后的百度坐标:', bdPoint);
                     
                     var point = new BMapGL.Point(bdPoint.lng, bdPoint.lat);
                     points.push(point);
                     
-                    // 更新当前位置标记
                     if (!currentMarker) {
-                        currentMarker = new BMapGL.Marker(point);
-                        map.addOverlay(currentMarker);
-                        map.centerAndZoom(point, 16);
-                        
-                        // 添加定位精度圈
-                        var circle = new BMapGL.Circle(point, 20, {
-                            strokeColor: '#18B566',
-                            strokeWeight: 2,
-                            strokeOpacity: 0.5,
-                            fillColor: '#18B566',
-                            fillOpacity: 0.2
-                        });
-                        map.addOverlay(circle);
+                        initMap(point);
                     } else {
-                        currentMarker.setPosition(point);
-                        map.panTo(point);
-                    }
-                    
-                    // 更新轨迹线
-                    if (points.length > 1) {
-                        if (polyline) {
-                            map.removeOverlay(polyline);
-                        }
-                        polyline = new BMapGL.Polyline(points, {
-                            strokeColor: '#18B566',
-                            strokeWeight: 4,
-                            strokeOpacity: 1
-                        });
-                        map.addOverlay(polyline);
+                        updateLocation(point);
                     }
                 } catch (err) {
                     console.error('更新位置失败:', err);
@@ -106,8 +132,53 @@
             }
         });
 
-        // 通知App地图已准备就绪
-        window.parent.postMessage({ type: 'mapReady' }, '*');
+        // 更新位置
+        function updateLocation(point) {
+            if (currentMarker) {
+                currentMarker.setPosition(point);
+                map.panTo(point);
+                
+                // 更新轨迹线
+                if (points.length > 1) {
+                    if (polyline) {
+                        map.removeOverlay(polyline);
+                    }
+                    polyline = new BMapGL.Polyline(points, {
+                        strokeColor: '#18B566',
+                        strokeWeight: 4,
+                        strokeOpacity: 1
+                    });
+                    map.addOverlay(polyline);
+                }
+            }
+        }
+
+        // 加载百度地图API
+        function loadBaiduMap() {
+            try {
+                var script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.src = 'https://api.map.baidu.com/api?type=webgl&v=1.0&ak=lk6K6qQBy3YNtjsCQ3QsJ4wwuNNP2wvG&callback=onBMapCallback';
+                script.onerror = function(err) {
+                };
+                document.body.appendChild(script);
+            } catch (err) {
+            }
+        }
+
+        // API加载完成的回调
+        window.onBMapCallback = function() {
+            try {
+                var defaultPoint = new BMapGL.Point(121.509825, 31.097752);
+                initMap(defaultPoint);
+                
+                window.parent.postMessage({ type: 'mapReady' }, '*');
+            } catch (err) {
+            }
+        }
+
+        // 加载地图
+        loadBaiduMap();
     </script>
 </body>
 </html> 

@@ -1,67 +1,90 @@
 <template>
-  <view class="login-container">
-    <image class="bg-image" src="/static/login-bg.jpg" mode="aspectFill"></image>
-    <view class="content">
+  <view class="container">
+    <view class="login-form">
       <view class="title">运动助手</view>
-      <view class="form">
-        <view class="input-group">
-          <input type="number" v-model="phone" maxlength="11" placeholder="请输入手机号" />
-        </view>
-        <view class="input-group code">
-          <input type="number" v-model="code" maxlength="6" placeholder="请输入验证码" />
-          <text class="code-btn" @tap="getCode">{{codeText}}</text>
-        </view>
-        <button class="submit-btn" @tap="handleLogin">登录/注册</button>
+      <view class="form-item">
+        <input 
+          type="number" 
+          v-model="phone" 
+          placeholder="请输入手机号" 
+          maxlength="11"
+        />
       </view>
+      <view class="form-item code-item">
+        <input 
+          type="number" 
+          v-model="code" 
+          placeholder="请输入验证码" 
+          maxlength="6"
+        />
+        <text 
+          class="get-code" 
+          :class="{ disabled: counting }" 
+          @tap="getCode"
+        >
+          {{ counting ? `${counter}s后重试` : '获取验证码' }}
+        </text>
+      </view>
+      <button class="login-btn" @tap="handleLogin">登录</button>
     </view>
   </view>
 </template>
 
 <script>
+import { ref, onMounted } from 'vue'
+
 export default {
-  data() {
-    return {
-      phone: '',
-      code: '',
-      codeText: '获取验证码',
-      counting: false,
-      timer: null,
-      countdown: 60
-    }
-  },
-  methods: {
-    getCode() {
-      if (this.counting) return
-      if (!/^1[3-9]\d{9}$/.test(this.phone)) {
+  setup() {
+    const phone = ref('18768880709') // 设置默认手机号
+    const code = ref('123456') // 设置默认验证码
+    const counting = ref(false)
+    const counter = ref(60)
+    
+    // 自动填充默认值
+    onMounted(() => {
+      phone.value = '18768880709'
+      code.value = '123456'
+    })
+
+    const getCode = () => {
+      if (counting.value) return
+      
+      if (!/^1[3-9]\d{9}$/.test(phone.value)) {
         uni.showToast({
           title: '请输入正确的手机号',
           icon: 'none'
         })
         return
       }
-      this.counting = true
-      this.countdown = 60
-      this.timer = setInterval(() => {
-        this.countdown--
-        this.codeText = `${this.countdown}s后重试`
-        if (this.countdown <= 0) {
-          clearInterval(this.timer)
-          this.counting = false
-          this.codeText = '获取验证码'
+      
+      // 直接显示验证码已发送
+      uni.showToast({
+        title: '验证码已发送',
+        icon: 'none'
+      })
+      
+      // 开始倒计时
+      counting.value = true
+      counter.value = 60
+      const timer = setInterval(() => {
+        counter.value--
+        if (counter.value <= 0) {
+          clearInterval(timer)
+          counting.value = false
         }
       }, 1000)
-      
-      // TODO: 调用验证码接口
-    },
-    handleLogin() {
-      if (!/^1[3-9]\d{9}$/.test(this.phone)) {
+    }
+
+    const handleLogin = () => {
+      if (!/^1[3-9]\d{9}$/.test(phone.value)) {
         uni.showToast({
           title: '请输入正确的手机号',
           icon: 'none'
         })
         return
       }
-      if (!/^\d{6}$/.test(this.code)) {
+      
+      if (!/^\d{6}$/.test(code.value)) {
         uni.showToast({
           title: '请输入正确的验证码',
           icon: 'none'
@@ -69,85 +92,115 @@ export default {
         return
       }
       
-      // TODO: 调用登录接口
-      uni.switchTab({
-        url: '/pages/run/run'
-      })
+      // 使用默认值直接登录
+      if (phone.value === '18768880709' && code.value === '123456') {
+        uni.setStorageSync('token', 'default_token')
+        uni.setStorageSync('userInfo', {
+          phone: phone.value
+        })
+        
+        uni.showToast({
+          title: '登录成功',
+          icon: 'success'
+        })
+        
+        // 修改跳转路径为 run 页面
+        setTimeout(() => {
+          // 先清除所有页面，再跳转到 run 页面
+          uni.reLaunch({
+            url: '/pages/run/run'
+          })
+        }, 1500)
+      } else {
+        uni.showToast({
+          title: '手机号或验证码错误',
+          icon: 'none'
+        })
+      }
     }
-  },
-  onUnmounted() {
-    if (this.timer) {
-      clearInterval(this.timer)
+
+    return {
+      phone,
+      code,
+      counting,
+      counter,
+      getCode,
+      handleLogin
     }
   }
 }
 </script>
 
 <style lang="scss">
-.login-container {
-  position: relative;
+.container {
   width: 100vw;
   height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: url('/static/login.png') no-repeat center center;
+  background-size: cover;
   
-  .bg-image {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-  }
-  
-  .content {
-    position: relative;
-    z-index: 2;
-    padding-top: 200rpx;
+  .login-form {
+    width: 80%;
+    padding: 40rpx;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20rpx;
+    box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
     
     .title {
-      text-align: center;
-      font-size: 48rpx;
-      color: #fff;
+      font-size: 40rpx;
       font-weight: bold;
-      margin-bottom: 100rpx;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      text-align: center;
+      color: #333;
+      margin-bottom: 60rpx;
     }
     
-    .form {
-      padding: 0 50rpx;
+    .form-item {
+      border-bottom: 1px solid #eee;
+      margin-bottom: 40rpx;
+      padding: 20rpx 0;
       
-      .input-group {
-        background: rgba(255,255,255,0.9);
-        border-radius: 45rpx;
-        padding: 20rpx 40rpx;
-        margin-bottom: 30rpx;
-        
-        &.code {
-          display: flex;
-          align-items: center;
-          
-          .code-btn {
-            font-size: 28rpx;
-            color: #18B566;
-            padding-left: 30rpx;
-          }
-        }
-        
-        input {
-          height: 60rpx;
-          font-size: 32rpx;
-        }
+      input {
+        font-size: 32rpx;
+        width: 100%;
+      }
+    }
+    
+    .code-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      input {
+        flex: 1;
+        margin-right: 20rpx;
       }
       
-      .submit-btn {
-        background: #18B566;
-        color: #fff;
-        border-radius: 45rpx;
-        height: 90rpx;
-        line-height: 90rpx;
-        font-size: 32rpx;
-        margin-top: 60rpx;
+      .get-code {
+        color: #18B566;
+        font-size: 28rpx;
+        padding: 10rpx 0;
+        white-space: nowrap;
         
-        &:active {
-          opacity: 0.8;
+        &.disabled {
+          color: #999;
         }
+      }
+    }
+    
+    .login-btn {
+      margin-top: 60rpx;
+      background: #18B566;
+      color: #fff;
+      height: 88rpx;
+      line-height: 88rpx;
+      border-radius: 44rpx;
+      font-size: 32rpx;
+      
+      &:active {
+        opacity: 0.8;
       }
     }
   }

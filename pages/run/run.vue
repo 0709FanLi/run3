@@ -1,50 +1,57 @@
 <template>
-  <view class="run-container">
-    <web-view v-if="isRunning" 
-      ref="mapWebview"
-      class="map" 
-      :src="mapUrl"
-      @message="handleMessage">
-    </web-view>
-    
-    <!-- 未开始跑步时的开始按钮 -->
-    <view v-if="!isRunning" class="start-overlay">
-      <view class="start-button-wrapper">
-        <view class="pulse-ring"></view>
-        <view class="start-button" @tap="toggleRun">
-          <text>开始跑步</text>
-        </view>
-      </view>
+  <view class="container">
+    <!-- 地图区域 -->
+    <view class="map-view">
+      <web-view 
+        :webview-styles="webviewStyles"
+        src="/hybrid/html/map.html" 
+        @message="handleMessage">
+      </web-view>
     </view>
     
-    <view class="run-info" :class="{ 'running': isRunning }">
-      <view class="stats-container">
-        <view class="stat-item">
-          <text class="value">{{ formatDistance }}</text>
-          <text class="label">距离(km)</text>
-        </view>
-        <view class="stat-item">
-          <text class="value">{{ formatDuration }}</text>
-          <text class="label">时间</text>
-        </view>
-        <view class="stat-item">
-          <text class="value">{{ pace }}</text>
-          <text class="label">配速</text>
-        </view>
-      </view>
-      
-      <view v-if="isRunning" class="run-button running" @tap="toggleRun">
-        <text>结束跑步</text>
-      </view>
-    </view>
-    
-    <!-- AI语音提示组件 -->
-    <ai-voice-coach 
-      v-if="isRunning"
-      :pace="pace"
-      :distance="distance"
-      :duration="duration">
-    </ai-voice-coach>
+    <!-- 使用cover-view显示数据 -->
+    <cover-view class="data-container">
+      <cover-view class="data-content">
+        <!-- 主要数据 -->
+        <cover-view class="main-data">
+          <cover-view class="data-item">
+            <cover-view class="value">{{ formatDistance }}</cover-view>
+            <cover-view class="label">距离(km)</cover-view>
+          </cover-view>
+          <cover-view class="data-item">
+            <cover-view class="value">{{ formatDuration }}</cover-view>
+            <cover-view class="label">时间</cover-view>
+          </cover-view>
+          <cover-view class="data-item">
+            <cover-view class="value">{{ pace }}</cover-view>
+            <cover-view class="label">配速</cover-view>
+          </cover-view>
+        </cover-view>
+
+        <!-- 次要数据 -->
+        <cover-view class="sub-data">
+          <cover-view class="stat-box">
+            <cover-view class="value">{{ calories }}</cover-view>
+            <cover-view class="label">消耗(kcal)</cover-view>
+          </cover-view>
+          <cover-view class="stat-box">
+            <cover-view class="value">{{ heartRate || '--' }}</cover-view>
+            <cover-view class="label">心率(bpm)</cover-view>
+          </cover-view>
+        </cover-view>
+
+        <!-- 按钮区域 -->
+        <cover-view class="btn-area">
+          <cover-view 
+            class="run-btn" 
+            :class="{'running': isRunning}" 
+            @tap="toggleRun"
+          >
+            <cover-view class="btn-text">{{ isRunning ? '结束跑步' : '开始跑步' }}</cover-view>
+          </cover-view>
+        </cover-view>
+      </cover-view>
+    </cover-view>
   </view>
 </template>
 
@@ -52,10 +59,16 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import AiVoiceCoach from '@/components/ai-voice-coach.vue'
 import { startRun, endRun, uploadLocation } from '@/utils/run'
+import MapView from '@/components/run/map-view.vue'
+import StatsPanel from '@/components/run/stats-panel.vue'
+import ControlButton from '@/components/run/control-button.vue'
 
 export default {
   components: {
-    AiVoiceCoach
+    AiVoiceCoach,
+    MapView,
+    StatsPanel,
+    ControlButton
   },
   setup() {
     const isRunning = ref(false)
@@ -70,7 +83,7 @@ export default {
     const locationTimer = ref(null)
     const durationTimer = ref(null)
     const trackPoints = ref([])
-    const mapUrl = ref('_www/hybrid/html/map.html')
+    const mapUrl = ref('/hybrid/html/map.html')
     const mapWebview = ref(null)
     
     // 添加重试相关变量
@@ -97,6 +110,10 @@ export default {
       const remainSeconds = Math.floor(paceSeconds % 60)
       return `${String(paceMinutes).padStart(2, '0')}'${String(remainSeconds).padStart(2, '0')}"`
     })
+    
+    // 添加新的响应式变量
+    const calories = ref(0)
+    const heartRate = ref(null)
     
     // 添加权限检查方法
     const checkAndRequestPermission = () => {
@@ -170,12 +187,40 @@ export default {
       });
     }
     
-    // 处理web-view消息
+    // 添加设置 webview 样式的方法
+    const setWebviewStyle = () => {
+      // #ifdef APP-PLUS
+      setTimeout(() => {
+        const pages = getCurrentPages()
+        const page = pages[pages.length - 1]
+        const currentWebview = page.$getAppWebview()
+        
+        // 获取子 webview
+        const webviews = currentWebview.children()
+        if (webviews && webviews[0]) {
+          webviews[0].setStyle({
+            height: '50vh',
+            background: '#ffffff'
+          })
+          console.log('设置webview样式成功')
+        } else {
+          console.log('未找到webview')
+        }
+      }, 300) // 延迟执行确保webview加载完成
+      // #endif
+      
+      // #ifdef MP
+      console.log('小程序环境下不支持调整webview样式')
+      // #endif
+    }
+
+    // 修改 handleMessage 方法
     const handleMessage = (event) => {
       console.log('收到地图消息:', event)
       const message = event.detail || {}
       if (message.type === 'mapReady') {
         updateMapLocation(location.value)
+        setWebviewStyle() // 地图准备就绪后设置样式
       }
     }
 
@@ -193,28 +238,22 @@ export default {
       }
       console.log('发送位置更新:', message)
       
-      // 使用 uni 的方式获取 webview
-      const pages = getCurrentPages()
-      const page = pages[pages.length - 1]
-      const currentWebview = page.$getAppWebview()
-      
-      // 获取子 webview
-      const webviews = currentWebview.children()
-      const mapWebview = webviews.find(v => v.getURL().includes('map.html'))
-      
+      // #ifdef APP-PLUS
+      const mapWebview = plus.webview.getWebviewById('map-webview')
       if (mapWebview) {
+        // 确保消息能被正确接收
+        const messageStr = JSON.stringify(message)
         mapWebview.evalJS(`
-          if (window.postMessage) {
-            window.postMessage(${JSON.stringify(message)}, '*');
+          try {
+            window.postMessage(${messageStr}, '*');
+          } catch(e) {
+            console.error('发送消息失败:', e);
           }
         `)
       } else {
-        console.error('未找到地图webview, 等待重试')
-        // 延迟重试
-        setTimeout(() => {
-          updateMapLocation(loc)
-        }, 500)
+        console.error('未找到地图webview')
       }
+      // #endif
     }
 
     // 开始/结束跑步
@@ -410,6 +449,11 @@ export default {
       durationTimer.value = setInterval(() => {
         duration.value++
       }, 1000)
+      
+      // 计算卡路里（简单估算：假设每公里消耗60卡路里）
+      if (distance.value > 0) {
+        calories.value = Math.round((distance.value / 1000) * 60)
+      }
     }
     
     // 停止追踪
@@ -438,22 +482,106 @@ export default {
       return R * c
     }
     
-    // 修改 onMounted 钩子
+    const createMapWebview = () => {
+      // #ifdef APP-PLUS
+      try {
+        const currentWebview = plus.webview.currentWebview()
+        
+        // 修改创建参数
+        const mapWebview = plus.webview.create('/hybrid/html/map.html', 'map-webview', {
+          top: '0px',
+          height: '50vh',
+          width: '100%',
+          position: 'static',
+          background: 'transparent', // 添加背景透明
+          render: 'always', // 保持渲染
+          kernel: 'WKWebview' // 使用 WKWebview 内核
+        })
+        
+        // 将webview添加到当前页面
+        currentWebview.append(mapWebview)
+        
+        // 监听webview加载完成事件
+        mapWebview.addEventListener('loaded', () => {
+          console.log('地图加载完成')
+          // 确保地图初始化完成
+          mapWebview.evalJS(`
+            if (window.map) {
+              window.map.enableScrollWheelZoom(true);
+              window.map.enableDragging();
+            }
+          `)
+          // 地图加载完成后更新位置
+          if (location.value) {
+            setTimeout(() => {
+              updateMapLocation(location.value)
+            }, 500)
+          }
+        })
+        
+        return mapWebview
+      } catch (err) {
+        console.error('创建地图webview失败:', err)
+        return null
+      }
+      // #endif
+      
+      // #ifdef MP
+      return null
+      // #endif
+    }
+
+    const webviewStyles = {
+      progress: false, // 是否显示进度条
+      background: '#ffffff' // webview 背景色
+    }
+
     onMounted(() => {
+      // #ifdef APP-PLUS
+      // 延迟创建地图webview
+      setTimeout(() => {
+        const mapWebview = createMapWebview()
+        if (!mapWebview) {
+          uni.showToast({
+            title: '创建地图失败',
+            icon: 'none'
+          })
+          return
+        }
+      }, 500)
+      // #endif
+
+      // 获取位置
       uni.getLocation({
         type: 'gcj02',
         isHighAccuracy: true,
         success: (res) => {
           console.log('初始化位置:', res)
           location.value = res
+          // 延迟更新地图位置
+          setTimeout(() => {
+            updateMapLocation(res)
+          }, 1500) // 增加延迟时间
         },
         fail: (err) => {
           console.error('初始化位置获取失败:', err)
+          uni.showToast({
+            title: '获取位置失败，请检查定位权限',
+            icon: 'none'
+          })
         }
       })
     })
     
     onUnmounted(() => {
+      // #ifdef APP-PLUS
+      // 销毁地图webview
+      const mapWebview = plus.webview.getWebviewById('map-webview')
+      if (mapWebview) {
+        mapWebview.close()
+      }
+      // #endif
+      
       stopTracking()
     })
     
@@ -470,158 +598,127 @@ export default {
       mapUrl,
       toggleRun,
       handleMessage,
-      retryCount,
-      maxRetries,
-      mapWebview
+      calories,
+      heartRate,
+      webviewStyles
     }
   }
 }
 </script>
 
 <style lang="scss">
-.run-container {
-  position: relative;
-  width: 100vw;
+.container {
+  width: 100%;
   height: 100vh;
-  background: #f8f8f8;
-  
-  .map {
-    width: 100%;
-    height: 100%;
-  }
-  
-  .location-marker {
-    position: absolute;
-    width: 40rpx;
-    height: 40rpx;
-  }
-  
-  .start-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255,255,255,0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    .start-button-wrapper {
-      position: relative;
-      
-      .pulse-ring {
-        position: absolute;
-        width: 240rpx;
-        height: 240rpx;
-        border-radius: 50%;
-        background: rgba(24,181,102,0.1);
-        animation: pulse 2s infinite;
-      }
-      
-      .start-button {
-        width: 200rpx;
-        height: 200rpx;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #18B566, #1ED677);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 10px rgba(24,181,102,0.3);
-        position: relative;
-        z-index: 1;
-        
-        text {
-          color: #fff;
-          font-size: 32rpx;
-          font-weight: bold;
-        }
-        
-        &:active {
-          transform: scale(0.95);
-        }
-      }
-    }
-  }
-  
-  .run-info {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #fff;
+  position: relative;
+}
+
+.map-view {
+  width: 100%;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.data-container {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 45vh;
+  background: #fff;
+  border-radius: 30rpx 30rpx 0 0;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  z-index: 99;
+
+  .data-content {
     padding: 30rpx;
-    border-radius: 30rpx 30rpx 0 0;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-    transition: all 0.3s;
-    
-    &.running {
-      background: rgba(255,255,255,0.9);
-    }
-    
-    .stats-container {
+    padding-bottom: calc(var(--window-bottom) + 20rpx);
+    position: relative; // 添加相对定位
+
+    .main-data {
       display: flex;
-      justify-content: space-around;
-      margin-bottom: 40rpx;
-      
-      .stat-item {
+      justify-content: space-between;
+      margin-bottom: 30rpx;
+
+      .data-item {
+        flex: 1;
         text-align: center;
-        
+
         .value {
-          display: block;
-          font-size: 40rpx;
+          font-size: 48rpx;
           font-weight: bold;
           color: #333;
         }
-        
+
         .label {
           font-size: 24rpx;
           color: #666;
+          margin-top: 10rpx;
         }
       }
     }
-    
-    .run-button {
-      width: 200rpx;
-      height: 200rpx;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #18B566, #1ED677);
-      margin: 0 auto;
+
+    .sub-data {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 10px rgba(24,181,102,0.3);
-      
-      &.running {
-        background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
-        box-shadow: 0 4px 10px rgba(255,107,107,0.3);
-      }
-      
-      text {
-        color: #fff;
-        font-size: 32rpx;
-        font-weight: bold;
-      }
-      
-      &:active {
-        transform: scale(0.95);
+      margin: 0 -10rpx 30rpx;
+
+      .stat-box {
+        flex: 1;
+        margin: 0 10rpx;
+        background: #f8f8f8;
+        padding: 20rpx;
+        border-radius: 16rpx;
+        text-align: center;
+
+        .value {
+          font-size: 36rpx;
+          font-weight: bold;
+          color: #333;
+        }
+
+        .label {
+          font-size: 24rpx;
+          color: #666;
+          margin-top: 6rpx;
+        }
       }
     }
-  }
-}
 
-@keyframes pulse {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.4;
-  }
-  100% {
-    transform: scale(0.95);
-    opacity: 0.8;
+    .btn-area {
+      bottom: calc(var(--window-bottom) + 40rpx); // 调整底部距离
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200rpx; // 确保有足够的高度
+      z-index: 100;
+
+      .run-btn {
+        width: 160rpx;
+        height: 160rpx;
+        border-radius: 50%;
+        background: #69f;
+        box-shadow: 0 4px 10px rgba(24,181,102,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &.running {
+          width: 400rpx;
+          height: 90rpx;
+          border-radius: 45rpx;
+        }
+
+        .btn-text {
+          color: #fff;
+          font-size: 32rpx;
+          font-weight: bold;
+          text-align: center;
+        }
+      }
+    }
   }
 }
 </style> 

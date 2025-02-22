@@ -60,7 +60,8 @@
         },
         "webView": {
             "minUserAgentVersion": "49.0",
-            "schemes": ["_www", "https", "http"]
+            "schemes": ["_www", "https", "http"],
+            "layoutRatio": 0.5
         }
     },
     /* 快应用特有相关 */
